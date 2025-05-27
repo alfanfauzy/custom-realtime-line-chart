@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, CSSProperties } from "react";
 
 type RealtimeChartProps = {
   data: Array<{ time: string; y: string }>;
@@ -6,11 +6,12 @@ type RealtimeChartProps = {
   width: number;
 };
 
+type StatusLevel = "high" | "medium" | "low";
+
 const RealtimeChart = (props: RealtimeChartProps) => {
   const { data, height, width } = props;
-  console.log('disini', data);
   const [isScrolledToEnd, setIsScrolledToEnd] = useState(true);
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Use external data if provided, otherwise use internal state
 
@@ -19,75 +20,87 @@ const RealtimeChart = (props: RealtimeChartProps) => {
   const TIME_LABEL_MARGIN = 5;
   const PADDING_LEFT = 20;
 
-  const STATUS_LEVELS = {
+  const STATUS_LEVELS: Record<StatusLevel, number> = {
     high: height * 0.1,
     medium: height * 0.5,
     low: height * 0.9,
   };
 
-  const styles = useMemo(
-    () => ({
-      wrapper: {
-        marginTop: '5px',
-        position: 'relative',
-        width: '100%',
-        maxWidth: `${width / 16}rem`, // 1200px / 16
-        height: `${(height + 40) / 16}rem`, // (200px + 40px) / 16
-        backgroundColor: '#0F1114',
-        borderRadius: '5px',
-      },
-      container: {
-        width: '100%',
-        height: `${(height + 40) / 16}rem`, // (200px + 40px) / 16
-        backgroundColor: '#0F1114',
-        position: 'relative',
-        overflow: 'hidden',
-      },
-      scrollContainer: {
-        width: `calc(100% - ${LABEL_WIDTH / 16}rem)`, // 80px / 16
-        height: '100%',
-        overflowX: 'auto',
-        scrollbarWidth: 'none',
-        msOverflowStyle: 'none',
-        position: 'absolute',
-        left: `${LABEL_WIDTH / 16}rem`, // 80px / 16
-        '&::-webkit-scrollbar': {
-          display: 'none',
-        },
-      },
-      fixedLabels: {
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        width: `${LABEL_WIDTH / 16}rem`, // 80px / 16
-        height: `${height / 16}rem`, // 200px / 16
-        backgroundColor: '#0F1114',
-        zIndex: 2,
-      },
-      horizontalLine: {
-        stroke: '#333',
-        strokeWidth: '1',
-      },
-      timeText: {
-        fill: '#9CA3AF',
-        fontSize: '12px',
-      },
-      statusText: {
-        fill: '#9CA3AF',
-        fontSize: '14px',
-        dominantBaseline: 'middle',
-      },
-      dataLine: {
-        fill: 'none',
-        stroke: '#fff',
-        strokeWidth: '2',
-        strokeLinecap: 'round',
-        strokeLinejoin: 'round',
-        transition: 'd 0.3s ease-in-out',
-      },
-    }),
-    [height, width]
-  );
+  const styles = useMemo(() => {
+    const wrapper: CSSProperties = {
+      marginTop: "5px",
+      position: "relative",
+      width: "100%",
+      maxWidth: `${width / 16}rem`,
+      height: `${(height + 40) / 16}rem`,
+      backgroundColor: "#0F1114",
+      borderRadius: "5px",
+    };
+
+    const container: CSSProperties = {
+      width: "100%",
+      height: `${(height + 40) / 16}rem`,
+      backgroundColor: "#0F1114",
+      position: "relative",
+      overflow: "hidden",
+    };
+
+    const scrollContainer: CSSProperties = {
+      width: `calc(100% - ${LABEL_WIDTH / 16}rem)`,
+      height: "100%",
+      overflowX: "auto",
+      position: "absolute",
+      left: `${LABEL_WIDTH / 16}rem`,
+      scrollbarWidth: "none", // Not standard, workaround
+      msOverflowStyle: "none", // Not standard, workaround
+    };
+
+    const fixedLabels: CSSProperties = {
+      position: "absolute",
+      left: 0,
+      top: 0,
+      width: `${LABEL_WIDTH / 16}rem`,
+      height: `${height / 16}rem`,
+      backgroundColor: "#0F1114",
+      zIndex: 2,
+    };
+
+    const horizontalLine: CSSProperties = {
+      stroke: "#333",
+      strokeWidth: 1,
+    };
+
+    const timeText: CSSProperties = {
+      fill: "#9CA3AF",
+      fontSize: "12px",
+    };
+
+    const statusText: CSSProperties = {
+      fill: "#9CA3AF",
+      fontSize: "14px",
+      dominantBaseline: "middle",
+    };
+
+    const dataLine: CSSProperties = {
+      fill: "none",
+      stroke: "#fff",
+      strokeWidth: 2,
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+      transition: "d 0.3s ease-in-out",
+    };
+
+    return {
+      wrapper,
+      container,
+      scrollContainer,
+      fixedLabels,
+      horizontalLine,
+      timeText,
+      statusText,
+      dataLine,
+    };
+  }, [height, width]);
 
   const handleScroll = () => {
     if (containerRef.current) {
@@ -101,18 +114,18 @@ const RealtimeChart = (props: RealtimeChartProps) => {
     if (containerRef.current && data?.length > 0 && isScrolledToEnd) {
       containerRef.current.scrollTo({
         left: containerRef.current.scrollWidth,
-        behavior: 'smooth',
+        behavior: "smooth",
       });
     }
   }, [data, isScrolledToEnd]);
 
-  const formatTime = (dateTime) => {
+  const formatTime = (dateTime: Date) => {
     const date = new Date(dateTime);
     const minutes = date.getMinutes();
     const seconds = date.getSeconds();
-    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
       2,
-      '0'
+      "0"
     )}`;
   };
 
@@ -121,11 +134,11 @@ const RealtimeChart = (props: RealtimeChartProps) => {
   const generatePath = () => {
     const validData = data?.filter((d) => d.y) || [];
 
-    if (validData?.length < 2) return '';
+    if (validData?.length < 2) return "";
 
-    const points = validData?.map((d, i) => ({
-      x: i * TIME_WIDTH,
-      y: STATUS_LEVELS[d.y] || STATUS_LEVELS.low,
+    const points = validData?.map((i) => ({
+      x: Number(i.y) * TIME_WIDTH,
+      y: STATUS_LEVELS.low,
     }));
 
     const path = points?.reduce((acc, point, i, arr) => {
@@ -138,7 +151,7 @@ const RealtimeChart = (props: RealtimeChartProps) => {
       const controlPoint2X = point.x - TIME_WIDTH / 3;
 
       return `${acc} C ${controlPoint1X} ${prevPoint.y}, ${controlPoint2X} ${point.y}, ${point.x} ${point.y}`;
-    }, '');
+    }, "");
 
     return path;
   };
@@ -183,7 +196,7 @@ const RealtimeChart = (props: RealtimeChartProps) => {
               style={styles.timeText}
               textAnchor="middle"
             >
-              {formatTime(point.time)}
+              {formatTime(new Date(point.time))}
             </text>
           ))}
 
