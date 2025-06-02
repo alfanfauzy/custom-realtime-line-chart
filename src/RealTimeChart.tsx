@@ -26,6 +26,10 @@ const RealtimeChart = (props: RealtimeChartProps) => {
     low: height * 0.9,
   };
 
+  const isStatusLevel = (value: string): value is StatusLevel => {
+    return value in STATUS_LEVELS;
+  };
+
   const styles = useMemo(() => {
     const wrapper: CSSProperties = {
       marginTop: "5px",
@@ -136,10 +140,17 @@ const RealtimeChart = (props: RealtimeChartProps) => {
 
     if (validData?.length < 2) return "";
 
-    const points = validData?.map((i) => ({
-      x: Number(i.y) * TIME_WIDTH,
-      y: STATUS_LEVELS.low,
-    }));
+    const points = validData?.map((d, i) => {
+      console.log("ini apa", d);
+      const yValue = isStatusLevel(d.y)
+        ? STATUS_LEVELS[d.y]
+        : STATUS_LEVELS.low;
+
+      return {
+        x: i * TIME_WIDTH,
+        y: yValue,
+      };
+    });
 
     const path = points?.reduce((acc, point, i, arr) => {
       if (i === 0) {
